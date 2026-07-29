@@ -1,0 +1,575 @@
+\documentclass[UTF8,twocolumn,10pt]{ctexart}
+
+\usepackage[a4paper,top=18mm,bottom=22mm,left=16mm,right=16mm,columnsep=6mm]{geometry}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{url}
+\usepackage{enumitem}
+\usepackage{balance}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta,positioning,fit,calc,shapes.geometric,patterns,backgrounds}
+
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0pt}
+\setlist[itemize]{leftmargin=1.2em,itemsep=1pt,topsep=2pt}
+\captionsetup{font=small,labelfont=bf}
+\titleformat{\section}{\large\bfseries}{\thesection}{0.5em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\pagestyle{fancy}
+\setlength{\headheight}{14pt}
+\fancyhf{}
+\fancyhead[L]{CloudFleet-OmniUQ}
+\fancyhead[R]{增强版论文草稿}
+\fancyfoot[C]{\thepage}
+\hypersetup{colorlinks=true,linkcolor=blue!60!black,citecolor=blue!60!black,urlcolor=blue!60!black}
+
+\newcommand{\method}{CloudFleet-OmniUQ}
+\newcommand{\baseline}{CloudFleet-RS}
+\newcommand{\placeholder}{\textbf{说明：}本文实验表格中的数值为论文结构占位数据，用于锁定实验协议、图表版式与叙事逻辑；默认假设 \method{} 表现最佳，后续应以真实实验结果替换。}
+\newcommand{\best}[1]{\textbf{#1}}
+
+\title{\method{}：融合 YOLO、事件相机与不确定性感知安全盾的云边协同 VDA5050 多车调度框架}
+\author{作者姓名$^{1}$，作者姓名$^{1}$，作者姓名$^{2}$\\
+\small $^{1}$单位名称，城市，邮编 \quad $^{2}$单位名称，城市，邮编\\
+\small 通信作者：example@example.com}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+面向仓储、柔性制造与园区配送的 VDA5050 无人车队系统正在从“静态规则调度”走向“动态感知增强调度”。然而，现有车队调度方法往往依赖简化假设：障碍分布近似静态、车辆状态同步可信、低层感知仅服务本车避障而不进入云端调度闭环。这些假设在高密度、强动态、低照度和通信抖动条件下会同时失效，导致云端时空预约基于过时状态，进而出现保守绕行、局部死锁和异常停车。为此，本文提出 \method{}，一种面向 VDA5050 车队的感知增强、时延鲁棒、风险可校准的云边协同调度框架。边缘侧使用 YOLOv10、事件相机分支与 LiDAR 占据模块联合检测动态障碍，云端侧通过未来占据风险预测和 chance-constrained 时空预约安全盾，将感知不确定性、通信时延与多车调度统一到同一优化闭环中。与现有 \baseline{} 相比，\method{} 不再把动态障碍仅视为低层局部避障问题，而是将其上升为云端任务分配、路权分配和时间窗分配的显式输入。我们进一步设计顶会级实验协议：覆盖 16--256 台车、4 类地图、5 类扰动源、强基线 MAPD/MARL 对比、长时数字孪生运行与实车闭环验证。占位结果表明，在 128 台车和强动态干扰条件下，\method{} 相比规则预约、经典 MAPD、学习型任务分配和当前 \baseline{} 方法取得更高吞吐量、更低近碰撞率和更稳定的延迟分布；在低照度与高速横穿场景中，多模态感知显著提升了风险提前预警时间。本文给出完整的图表、实验流程和占位结果叙事，便于后续直接替换真实数据推进为实证版本。
+\end{abstract}
+
+\noindent\textbf{关键词：} 多机器人调度；VDA5050；云边协同；YOLOv10；事件相机；不确定性估计；时空预约；数字孪生
+
+\section{引言}
+
+多台 AGV/AMR 在共享道路网络上连续执行任务时，真正困难的问题不只是单车导航，而是云端如何在任务流持续到达、通信存在时延、局部道路存在拥塞、环境中有人车混行的情况下，持续做出全局合理且安全可证的调度决策。当前工业系统大量使用拓扑路网、路段锁、交叉口互斥和中心化调度平台，这一技术路线在中低密度场景中可稳定运行，但在复杂动态环境中存在三类关键短板。
+
+第一，\textbf{动态障碍没有进入调度闭环}。许多系统把行人、叉车和临时障碍只视为车辆本地避障模块的输入，而云端调度依然假设未来交通结构主要由车队自身决定。这样一来，当局部区域持续出现动态穿越时，云端时空预约表仍可能基于“几秒前”的静态近似，从而做出过于激进或过于保守的时间窗分配。
+
+第二，\textbf{通信与感知时延会扭曲预约约束}。VDA5050 解决了消息标准化问题，但不会自动消除异步上报、乱序和丢包造成的状态漂移。若调度器将收到的 state 直接当作当前真实状态，则高密度车队中的局部拥塞会被系统性低估。
+
+第三，\textbf{当前车队论文的实验规模和强度普遍不足}。很多工作只展示小规模仿真、弱基线对比或短时演示，很难支撑在顶会环境下对可扩展性、鲁棒性和感知闭环价值的论证。
+
+本文提出 \method{} 以解决上述问题。其核心思想不是单纯往车队系统中“加一个视觉模块”，而是把\textbf{感知、预测、调度和安全盾统一为一个风险闭环}：边缘侧通过 RGB 图像、事件流和 LiDAR 扫描获得动态障碍的几何与语义信息；中间层对障碍未来占据和不确定性进行预测；云端在任务分配、路径搜索与路权分配时显式使用风险场；最终由 chance-constrained 安全盾对所有候选动作进行时间窗级别的投影修正。这样，低照度、高速穿行、短时遮挡和通信抖动都不再是调度之外的“噪声”，而成为调度器显式建模的状态变量。
+
+本文贡献如下：
+\begin{itemize}
+  \item 提出一个面向 VDA5050 多车系统的云边协同调度框架，将 YOLOv10、事件相机、LiDAR 占据、多目标跟踪、未来风险预测与任务分配/预约调度统一到同一闭环。
+  \item 提出一个不确定性感知的时空预约安全盾，将动态障碍检测误差、轨迹预测方差和通信时延共同纳入 chance-constrained 调度约束，从而替代纯几何互斥或纯规则预约。
+  \item 设计一套对标顶会标准的实验协议，覆盖大规模车队、长时数字孪生、动态障碍强扰动、感知失真与通信异常，并给出完整配图、实验流程和占位结果叙事。
+\end{itemize}
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[every node/.style={font=\small}, box/.style={draw,rounded corners=2pt,align=center,minimum height=8mm,minimum width=24mm,fill=gray!8}, cloud/.style={draw,ellipse,align=center,minimum height=9mm,minimum width=30mm,fill=blue!8}]
+  \node[box] (rgb) at (0,2.6) {RGB 相机\\YOLOv10};
+  \node[box] (event) at (0,1.2) {事件相机\\高频运动边缘};
+  \node[box] (lidar) at (0,-0.2) {LiDAR\\占据与几何边界};
+
+  \node[box] (fuse) at (3.2,1.2) {多模态融合\\目标跟踪与速度估计};
+  \node[box] (pred) at (6.2,1.2) {未来占据预测\\风险方差估计};
+  \node[cloud] (sched) at (9.5,1.9) {云端分层调度器\\派单 / 路权 / 时间窗};
+  \node[box] (shield) at (9.5,0.2) {UQ 安全盾\\chance-constrained reservation};
+  \node[box] (order) at (12.4,1.2) {VDA5050\\Order / InstantAction};
+
+  \draw[-{Latex[length=2mm]},thick] (rgb) -- (fuse);
+  \draw[-{Latex[length=2mm]},thick] (event) -- (fuse);
+  \draw[-{Latex[length=2mm]},thick] (lidar) -- (fuse);
+  \draw[-{Latex[length=2mm]},thick] (fuse) -- (pred);
+  \draw[-{Latex[length=2mm]},thick] (pred) -- (sched);
+  \draw[-{Latex[length=2mm]},thick] (pred) -- (shield);
+  \draw[-{Latex[length=2mm]},thick] (sched) -- (shield);
+  \draw[-{Latex[length=2mm]},thick] (shield) -- (order);
+
+  \node[box,below=10mm of shield] (state) {异步状态补偿\\延迟 / 丢包 / 乱序};
+  \node[box,left=8mm of state] (reserve) {预约表\\边 / 点 / 区域};
+  \draw[-{Latex[length=2mm]},thick] (state) -- (shield);
+  \draw[-{Latex[length=2mm]},thick] (reserve) -- (shield);
+  \draw[-{Latex[length=2mm]},thick] (shield) -- (reserve);
+
+  \node[box,right=10mm of order] (fleet) {AMR 车队\\执行与上报};
+  \draw[-{Latex[length=2mm]},thick] (order) -- (fleet);
+  \draw[-{Latex[length=2mm]},thick] (fleet.south) |- (state.east);
+
+  \node[draw,dashed,fit=(rgb)(event)(lidar)(fuse),inner sep=4mm,label=above:{边缘感知层}] {};
+  \node[draw,dashed,fit=(pred)(sched)(shield)(state)(reserve),inner sep=4mm,label=above:{云端决策层}] {};
+\end{tikzpicture}
+\caption{\method{} 总体框架。不同于只在车辆本地做避障的方案，本文将多模态动态障碍感知、未来风险预测、不确定性估计和云端时空预约统一为一个闭环。}
+\label{fig:overview}
+\end{figure*}
+
+\section{相关工作}
+
+\subsection{多机器人路径规划与在线任务分配}
+
+多智能体路径规划（MAPF）与在线拾取-配送（MAPD）为仓储与工厂车队提供了重要理论基础。经典 MAPF 工作统一了冲突定义、目标函数和 benchmark 术语，但许多方法默认静态图、离散时间和理想同步状态。MAPD 研究则强调任务流持续到达、更贴近真实仓储流程。近年的学习型任务分配方法进一步将注意力机制和 MARL 引入大规模车队，证明学习策略在数百甚至上千机器人仿真中具有潜力，但仍普遍依赖简化感知和弱动态环境。本文与这些工作的差别在于：我们不把调度问题仅仅定义为“机器人之间的避碰”，而是显式考虑外部动态障碍、异步感知和通信时延带来的未来风险扭曲。
+
+\subsection{云端车队管理与 VDA5050}
+
+VDA5050 统一了主控与车辆之间的订单、状态、即时动作和可视化主题，是构建异构车队平台的重要协议基础。但标准本身不规定调度算法，也不提供对动态障碍、感知不确定性和时延鲁棒性的处理机制。现有云端 AMR 管理工作主要关注平台通信、控制分发与任务调度原型，较少深入讨论如何将动态风险感知纳入云端车队优化。
+
+\subsection{实时目标检测与事件相机感知}
+
+YOLO 系列长期是高效实时目标检测的重要代表，YOLOv10 进一步推进了端到端、低延迟的部署能力。另一方面，事件相机由于其高时间分辨率和高动态范围，非常适合高速运动、频闪和低照度环境。DSEC 等数据集表明事件相机与 LiDAR、RGB 的同步采集能够支持更加鲁棒的感知研究。近期事件相机检测工作也展示了从 20 Hz 扩展到更高检测频率的能力。本文的目标不是单独追求视觉检测精度，而是利用事件相机在“高速动态风险提前预警”上的优势服务云端预约调度。
+
+\subsection{安全约束与风险感知控制}
+
+车队级安全不能只依赖低层局部避障。控制屏障函数、风险约束优化与安全过滤器提供了将学习策略投影到可行集合中的思路，但现有方法较少同时处理离散图预约、通信时延和动态障碍未来占据的不确定性。本文的 UQ 安全盾正是为填补这一区间而设计。
+
+\section{问题定义}
+
+设车队集合为 $\mathcal{R}=\{1,\dots,N\}$，任务集合为 $\mathcal{J}$，拓扑图为
+\begin{equation}
+G=(V,E), \qquad e=(u,v,l_e,c_e,d_e),
+\end{equation}
+其中 $l_e$ 为边长，$c_e$ 为容量，$d_e$ 为方向约束。每个任务 $j$ 由取货点 $o_j$、送达点 $g_j$、释放时刻 $r_j$、截止时刻 $d_j$ 和优先级 $w_j$ 构成。
+
+不同于当前多数车队模型，我们引入动态障碍集合 $\mathcal{O}_t$，每个障碍 $k$ 的状态由
+\begin{equation}
+o_k^t = [p_k^t, v_k^t, c_k^t, \Sigma_k^t]
+\end{equation}
+表示，其中 $p_k^t$ 为位置，$v_k^t$ 为速度，$c_k^t$ 为类别，$\Sigma_k^t$ 为状态不确定性。车辆状态同样不直接等于上报值，而是由异步补偿器估计为
+\begin{equation}
+\tilde{s}_i^t = \Phi(s_i^{t_i}, t-t_i, \Delta_i),
+\end{equation}
+其中 $t_i$ 为最近一次有效上报时间戳，$\Delta_i$ 为网络延迟统计量。
+
+调度动作定义为
+\begin{equation}
+a_i = (j_i, \pi_i, \tau_i, \rho_i),
+\end{equation}
+其中 $j_i$ 为接单决策，$\pi_i$ 为候选路径，$\tau_i$ 为出发或等待时间窗，$\rho_i$ 为局部路权或让行优先级。
+
+本文优化目标为
+\begin{equation}
+\min \sum_{j\in \mathcal{J}} w_j C_j
+ + \alpha \sum_i D_i
+ + \beta \sum_i W_i
+ + \eta \sum_t Z_t
+ + \zeta \sum_t \mathbb{E}[R_t],
+\label{eq:objective}
+\end{equation}
+其中 $C_j$ 为任务完成时间，$D_i$ 为空驶距离，$W_i$ 为等待时间，$Z_t$ 为死锁恢复或硬冲突事件，$R_t$ 为风险代价。最后一项使调度器不仅优化吞吐，也优化未来风险暴露。
+
+\section{\method{} 方法}
+
+\subsection{边缘多模态感知}
+
+每台车边缘侧部署 RGB 相机、事件相机和 LiDAR。给定时刻 $t$，RGB 图像记为 $I_t$，事件流记为 $\mathcal{E}_{t-\Delta:t}$，LiDAR 扫描记为 $L_t$。RGB 分支使用 YOLOv10 获得语义检测结果：
+\begin{equation}
+\mathcal{D}^{rgb}_t = f_{\mathrm{yolo}}(I_t).
+\end{equation}
+事件相机分支将事件流编码为 voxel 或 event frame，输出高频动态边缘与运动敏感检测：
+\begin{equation}
+\mathcal{D}^{event}_t = f_{\mathrm{event}}(\mathcal{E}_{t-\Delta:t}).
+\end{equation}
+LiDAR 分支提供几何占据图与最近障碍边界：
+\begin{equation}
+\mathcal{M}^{occ}_t = f_{\mathrm{lidar}}(L_t).
+\end{equation}
+三路结果经过 late fusion 和跟踪器后形成统一目标集合
+\begin{equation}
+\mathcal{O}_t = \Psi(\mathcal{D}^{rgb}_t,\mathcal{D}^{event}_t,\mathcal{M}^{occ}_t).
+\end{equation}
+这样做有两个直接好处：一是 RGB 分支提供类别语义，二是事件分支在快速横穿和低照度条件下弥补 RGB 漏检，三是 LiDAR 为安全距离和占据边界提供稳定几何参考。
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[every node/.style={font=\scriptsize}, box/.style={draw,rounded corners=2pt,minimum width=13mm,minimum height=6mm,align=center,fill=gray!8}]
+  \node[box] (rgb) at (0,2.2) {RGB\\YOLOv10};
+  \node[box] (ev) at (0,1.0) {Event\\Voxel};
+  \node[box] (lid) at (0,-0.2) {LiDAR\\Occupancy};
+  \node[box] (fus) at (2.6,1.0) {Late Fusion\\+ Tracking};
+  \node[box] (pred) at (5.4,1.0) {Intent\\Prediction};
+  \node[box] (risk) at (8.0,1.0) {Risk Map\\$\mu,\sigma$};
+  \draw[-{Latex[length=1.8mm]},thick] (rgb) -- (fus);
+  \draw[-{Latex[length=1.8mm]},thick] (ev) -- (fus);
+  \draw[-{Latex[length=1.8mm]},thick] (lid) -- (fus);
+  \draw[-{Latex[length=1.8mm]},thick] (fus) -- (pred);
+  \draw[-{Latex[length=1.8mm]},thick] (pred) -- (risk);
+  \node[draw,dashed,fit=(rgb)(ev)(lid)(fus),inner sep=3mm,label=above:{边缘感知}] {};
+  \node[draw,dashed,fit=(pred)(risk),inner sep=3mm,label=above:{风险估计}] {};
+\end{tikzpicture}
+\caption{多模态动态障碍感知链路。事件相机负责捕捉高速动态变化，YOLOv10 负责语义检测，LiDAR 负责几何占据。}
+\label{fig:perception}
+\end{figure}
+
+\subsection{未来占据与不确定性预测}
+
+仅有当前检测仍不足以服务云端预约，因为车队调度依赖未来时间窗。本文使用滑窗轨迹编码器根据最近 $K$ 帧目标状态估计未来 $H$ 步占据分布：
+\begin{equation}
+(\hat{p}_{k,t+1:t+H}, \Sigma_{k,t+1:t+H})
+= f_{\mathrm{pred}}(o_k^{t-K+1:t}).
+\end{equation}
+进一步地，对路网中的边和节点定义未来风险场：
+\begin{equation}
+\mathcal{R}_{x,\tau} = g\big(\{\hat{p}_{k,\tau}, \Sigma_{k,\tau}\}_{k=1}^{|\mathcal{O}|}\big), \quad x\in V\cup E.
+\end{equation}
+该风险场不再是二值占用，而是“未来某时间窗是否适合分配路权”的概率描述。这使调度器能提前避开高不确定性区域，而非等到车辆本地避障触发再被动停车。
+
+\subsection{异步状态补偿}
+
+车队云端系统常见的问题是状态上报延迟和乱序。对车辆 $i$，若最近一次消息时间戳为 $t_i$，则当前时刻的估计状态采用运动学外推：
+\begin{equation}
+\tilde{x}_i(t) = x_i(t_i) + \hat{v}_i (t-t_i) + \frac{1}{2}\hat{a}_i (t-t_i)^2.
+\end{equation}
+延迟统计量 $\Delta_i$ 由历史消息间隔更新。若消息超时或连接不稳定，则对应车辆在预约表中的未来占用被放宽为更保守的时间窗，从而降低时延低估带来的冲突风险。
+
+\subsection{分层调度器}
+
+云端调度器由三层构成：
+\begin{itemize}
+  \item \textbf{任务层：}选择哪台车接哪项任务。
+  \item \textbf{交通层：}决定交叉口路权与让行顺序。
+  \item \textbf{路径层：}在时空预约和动态风险约束下进行路径与等待时间窗搜索。
+\end{itemize}
+
+调度状态由车辆、任务、路网、预约和风险五类特征组成：
+\begin{equation}
+S_t = \{S_t^{veh}, S_t^{task}, S_t^{map}, S_t^{res}, S_t^{risk}\}.
+\end{equation}
+策略网络输出高层动作 $\hat{a}$，后续所有动作必须经过安全盾修正后才能形成 VDA5050 订单。
+
+\subsection{UQ 安全盾}
+
+当前许多车队系统中的安全过滤器只验证“是否几何冲突”，而本文的安全盾验证“是否在不确定性容忍度内可接受”。定义车辆路径 $\pi_i$ 的占用区间为
+\begin{equation}
+\Omega_i(\pi_i)=\{(x,[t_{\mathrm{in}},t_{\mathrm{out}}]) \mid x\in V\cup E\}.
+\end{equation}
+对任意候选动作，要求其满足 chance constraint：
+\begin{equation}
+\mathbb{P}\big(\Omega_i(\pi_i)\cap \mathcal{B}\neq \emptyset \;\cup\; \Omega_i(\pi_i)\cap \mathcal{R} > \kappa \big) \le \varepsilon.
+\label{eq:chance}
+\end{equation}
+其中 $\mathcal{B}$ 为已有预约表，$\mathcal{R}$ 为未来风险场，$\kappa$ 为可接受风险阈值，$\varepsilon$ 为总体碰撞概率上界。若策略输出 $\hat{a}$ 不满足式~(\ref{eq:chance})，则安全盾求解如下投影问题：
+\begin{equation}
+\begin{aligned}
+a^\star = \arg\min_{a\in\mathcal{A}_{safe}} &\; \|f(a)-f(\hat{a})\|_2 + \mu \Delta T(a) + \nu \Delta D(a)\\
+\text{s.t.}\quad
+& \mathbb{P}(\text{collision}\mid a)\le \varepsilon,\\
+& b_i \ge b_{\min},\quad v_i \le v_{\max},\\
+& t-t_i \le \delta_{\max}.
+\end{aligned}
+\label{eq:shield}
+\end{equation}
+这样，安全盾不只是做“硬拒绝”，而是通过最小代价等待、换路、重排路权等方式求出最接近原策略意图的安全动作。
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[every node/.style={font=\scriptsize}]
+  \draw[->] (0,0) -- (6.6,0) node[right]{时间};
+  \draw[->] (0,0) -- (0,3.6) node[above]{路段/节点};
+  \foreach \y/\lab in {0.6/e_1,1.3/v_2,2.0/e_3,2.7/v_4,3.4/e_5} {
+    \draw[gray!25] (0,\y) -- (6.2,\y);
+    \node[left] at (0,\y) {$\lab$};
+  }
+  \draw[fill=blue!42,draw=blue!70] (0.6,1.15) rectangle (2.1,1.45);
+  \draw[fill=orange!55,draw=orange!80] (1.7,1.15) rectangle (3.0,1.45);
+  \draw[fill=red!35,draw=red!80,pattern=north east lines] (1.7,1.15) rectangle (2.1,1.45);
+  \draw[fill=green!45,draw=green!75] (2.5,1.85) rectangle (3.5,2.15);
+  \draw[-{Latex[length=1.8mm]},thick,red!80] (3.2,1.0) -- (4.3,1.8);
+  \node[red!75] at (4.1,0.95) {风险过高};
+  \node[align=center] at (4.8,2.9) {等待 / 绕行 / 让行\\投影为安全预约};
+\end{tikzpicture}
+\caption{不确定性感知安全盾示意。与纯互斥预约不同，\method{} 在未来动态风险和时延补偿基础上进行时间窗投影。}
+\label{fig:shield}
+\end{figure}
+
+\section{实验协议设计}
+
+\subsection{研究问题与总体原则}
+
+本文实验围绕五个研究问题展开：`RQ1` 可扩展性，`RQ2` 动态感知价值，`RQ3` UQ 安全盾价值，`RQ4` 通信鲁棒性，`RQ5` 实时性与部署成本。实验设计遵循三项原则：
+\begin{itemize}
+  \item \textbf{强基线原则：}不仅与弱规则方法比较，也与 MAPD/MARL 强基线比较。
+  \item \textbf{分层验证原则：}分别验证感知、预测、调度与闭环效果。
+  \item \textbf{大规模长时原则：}至少覆盖 16--256 台车、4 类地图和 4--24 小时数字孪生运行。
+\end{itemize}
+
+\subsection{实验场景矩阵}
+
+图~\ref{fig:workflow} 给出实验流程设计。实验分为四组：
+\begin{enumerate}[leftmargin=1.3em,itemsep=1pt]
+  \item 数字孪生大规模调度实验。
+  \item 动态障碍感知与风险预测实验。
+  \item 通信延迟、丢包、乱序鲁棒性实验。
+  \item 实车闭环实验。
+\end{enumerate}
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[every node/.style={font=\small}, box/.style={draw,rounded corners=2pt,minimum height=8mm,minimum width=24mm,align=center,fill=gray!8}]
+  \node[box] (s1) at (0,0) {场景生成\\地图 / 任务流 / 动态障碍};
+  \node[box] (s2) at (3.5,0) {传感器回放\\RGB / Event / LiDAR};
+  \node[box] (s3) at (7.1,0) {边缘感知\\检测 / 跟踪 / 风险};
+  \node[box] (s4) at (10.6,0) {云端调度\\派单 / 预约 / 安全盾};
+  \node[box] (s5) at (14.0,0) {日志与评估\\吞吐 / 安全 / 时延};
+  \draw[-{Latex[length=2mm]},thick] (s1) -- (s2);
+  \draw[-{Latex[length=2mm]},thick] (s2) -- (s3);
+  \draw[-{Latex[length=2mm]},thick] (s3) -- (s4);
+  \draw[-{Latex[length=2mm]},thick] (s4) -- (s5);
+
+  \node[box,fill=blue!7] (a1) at (1.7,-1.6) {大规模调度\\16 / 32 / 64 / 128 / 256};
+  \node[box,fill=blue!7] (a2) at (5.3,-1.6) {动态感知\\低照度 / 横穿 / 模糊};
+  \node[box,fill=blue!7] (a3) at (8.9,-1.6) {通信鲁棒\\50-500ms / 0-10\% 丢包};
+  \node[box,fill=blue!7] (a4) at (12.5,-1.6) {实车闭环\\8-16 台车 / 4-8h};
+  \draw[dashed] (a1.north) -- (s1.south);
+  \draw[dashed] (a2.north) -- (s2.south);
+  \draw[dashed] (a3.north) -- (s4.south);
+  \draw[dashed] (a4.north) -- (s5.south);
+\end{tikzpicture}
+\caption{顶会级实验流程设计。本文不是单一吞吐实验，而是将大规模调度、动态感知、通信鲁棒性和实车闭环统一到一个评估矩阵中。}
+\label{fig:workflow}
+\end{figure*}
+
+\subsection{地图、车队规模与任务规模}
+
+为对标一线工作，数字孪生部分设置四类地图：小型环形仓储、中型车间、多交叉口大型仓储以及园区混行路网。车队规模设置为 `16 / 32 / 64 / 128 / 256` 台车，极限测试在附录扩展到 `512` 台。任务流按照泊松过程生成，强度覆盖 `300-5000 tasks/hour`。每个配置运行 `5-10` 个随机种子，并报告均值、标准差与显著性检验结果。
+
+\subsection{动态障碍与传感器配置}
+
+每台车配置前向 RGB 相机、前向事件相机、LiDAR 与 IMU。动态障碍包含行人、叉车、托盘车和临时堆叠障碍，包含低照度、逆光、高速横穿和短时遮挡四类难场景。事件相机数据用于提供高频动态变化线索，重点评估其是否能提高“风险提前预警时间”而不仅仅是单帧检测精度。
+
+\subsection{基线方法}
+
+主文对比以下六类方法：
+\begin{itemize}
+  \item \textbf{Greedy+Reservation}：最近车派单 + 规则预约。
+  \item \textbf{Priority Planning}：优先级调度 + 预约校验。
+  \item \textbf{TP/TPTS}：经典 MAPD 基线。
+  \item \textbf{RTAW}：学习型任务分配基线。
+  \item \textbf{\baseline{}}：当前系统版本，只有规则风险处理与弱动态建模。
+  \item \textbf{\method{}}：完整方法。
+\end{itemize}
+
+\subsection{评估指标}
+
+调度指标包括任务完成率、吞吐量、平均任务完成时间、平均等待时间、空驶距离与 SLA 超时率；安全指标包括硬碰撞、近碰撞、死锁恢复次数、紧急停车次数与安全盾回退率；感知指标包括 mAP、IDF1、ADE/FDE、低照度召回率与风险提前预警时间；UQ 指标包括 ECE、NLL 和 Brier Score；实时性指标包括边缘感知延迟、云端调度延迟和端到端感知到决策延迟。
+
+\section{占位实验结果与分析}
+
+\noindent\placeholder
+
+\subsection{主对比实验}
+
+表~\ref{tab:main} 给出数字孪生主结果占位表。可以看到，\method{} 在 64 台和 128 台车下都显著优于规则基线、经典 MAPD 和学习型任务分配基线。值得注意的是，\baseline{} 虽然已经具备规则预约与轻量 RL 调度，但在动态障碍强扰动条件下，由于没有将感知不确定性显式纳入预约约束，其死锁恢复和紧急停车仍显著高于本文方法。
+
+\begin{table*}[t]
+\centering
+\caption{主对比实验占位结果。数值仅用于论文结构占位，默认假设 \method{} 最优。}
+\label{tab:main}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccc}
+\toprule
+\multirow{2}{*}{方法} & \multicolumn{4}{c}{64 台车 / 中型仓储 / 强动态干扰} & \multicolumn{4}{c}{128 台车 / 大型仓储 / 通信扰动}\\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}
+& 吞吐 & 完成率(\%) & 近碰撞/100h & 调度延迟(ms)
+& 吞吐 & 完成率(\%) & 近碰撞/100h & 调度延迟(ms)\\
+\midrule
+Greedy+Reservation & 1180 & 87.2 & 18.4 & 24.6 & 2050 & 81.5 & 36.2 & 31.8\\
+Priority Planning & 1215 & 88.6 & 15.9 & 27.4 & 2143 & 83.4 & 31.7 & 35.1\\
+TP/TPTS & 1268 & 90.4 & 12.7 & 39.6 & 2288 & 85.1 & 24.8 & 49.7\\
+RTAW & 1301 & 91.3 & 11.5 & 28.2 & 2362 & 86.6 & 22.3 & 36.8\\
+\baseline{} & 1368 & 93.8 & 8.1 & 34.9 & 2486 & 89.7 & 16.2 & 42.4\\
+\method{} & \best{1455} & \best{96.1} & \best{4.3} & \best{33.7} & \best{2698} & \best{93.4} & \best{8.9} & \best{39.5}\\
+\bottomrule
+\end{tabular}
+}
+\end{table*}
+
+\subsection{大规模可扩展性}
+
+图~\ref{fig:scale} 展示了车队规模扩展趋势占位图。与其他方法相比，\method{} 在 32 台以下的优势并不极端，但随着车队规模上升到 128 台和 256 台，优势明显扩大。这是因为在小规模场景中，调度瓶颈主要来自简单路径冲突；而在大规模场景中，动态障碍、局部拥塞和异步时延共同作用，使得感知增强风险闭环带来的收益被显著放大。
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=\linewidth,height=5.0cm,
+  xlabel={车队规模}, ylabel={吞吐量（tasks/hour）},
+  grid=both, legend style={font=\scriptsize,at={(0.02,0.98)},anchor=north west},
+  xmin=16,xmax=256,ymin=300,ymax=6000,
+  xtick={16,32,64,128,256}]
+  \addplot[orange!85,thick,dashed,mark=*] coordinates {(16,420)(32,790)(64,1180)(128,2050)(256,3520)};
+  \addlegendentry{Greedy+Reservation}
+  \addplot[teal!80,thick,dashdotted,mark=square*] coordinates {(16,438)(32,826)(64,1268)(128,2288)(256,3880)};
+  \addlegendentry{TP/TPTS}
+  \addplot[blue!70,thick,dotted,mark=triangle*] coordinates {(16,455)(32,850)(64,1368)(128,2486)(256,4225)};
+  \addlegendentry{\baseline{}}
+  \addplot[red!75!black,very thick,mark=diamond*] coordinates {(16,468)(32,894)(64,1455)(128,2698)(256,4688)};
+  \addlegendentry{\method{}}
+\end{axis}
+\end{tikzpicture}
+\caption{车队规模扩展占位图。随着规模增大，感知增强风险闭环对吞吐的帮助更明显。}
+\label{fig:scale}
+\end{figure}
+
+\subsection{多模态感知价值}
+
+表~\ref{tab:perception} 比较了不同感知配置在动态障碍风险提前预警上的表现。仅使用 RGB 的 YOLOv10 已可提供较高语义精度，但在低照度和高速横穿条件下预警时间明显不足；仅使用事件相机虽然在高动态条件下更敏感，但语义完整性较弱；LiDAR 单模态能提供稳定几何边界，却缺乏类别语义和细粒度意图信息。三者融合后，\method{} 在低照度召回率和预警时间上均取得最佳结果，为后续云端预约提供了更可靠的风险输入。
+
+\begin{table}[t]
+\centering
+\caption{多模态感知子系统占位结果}
+\label{tab:perception}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+感知配置 & mAP50 & IDF1 & 低照度召回(\%) & 预警时间(ms)\\
+\midrule
+YOLOv10 only & 74.2 & 69.5 & 61.8 & 182\\
+Event only & 66.8 & 64.1 & 79.4 & 246\\
+LiDAR only & 58.7 & 61.2 & 72.5 & 214\\
+YOLOv10 + LiDAR & 77.9 & 73.6 & 80.8 & 258\\
+Event + LiDAR & 72.4 & 70.1 & 85.9 & 301\\
+\method{} full fusion & \best{81.6} & \best{76.8} & \best{89.7} & \best{338}\\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\subsection{UQ 安全盾与鲁棒性}
+
+表~\ref{tab:ablation} 给出关键消融占位结果。可以看到：
+\begin{itemize}
+  \item 去掉事件相机后，吞吐下降不算最剧烈，但近碰撞显著增加，说明事件分支的主要价值在于高速风险预警。
+  \item 去掉 UQ 后，系统虽然更激进，局部吞吐略高于仅规则版本，但近碰撞、紧急停车和风险校准误差明显恶化。
+  \item 去掉时延补偿后，在中低负载下影响不大，但一旦通信抖动上升，死锁恢复和异常停车会快速放大。
+\end{itemize}
+这说明 \method{} 的优势不是单个模块独立贡献，而是多模态感知、异步补偿与 chance-constrained 安全盾共同闭环的结果。
+
+\begin{table}[t]
+\centering
+\caption{关键模块消融占位结果（128 台车 / 强动态 / 通信扰动）}
+\label{tab:ablation}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+方法 & 完成率(\%) & 近碰撞/100h & ECE(\%) & 紧急停车/100h\\
+\midrule
+w/o Event & 91.8 & 12.8 & 7.9 & 5.7\\
+w/o YOLO & 90.9 & 14.2 & 8.6 & 6.3\\
+w/o LiDAR fusion & 91.5 & 13.6 & 8.1 & 5.9\\
+w/o UQ & 90.7 & 16.9 & 12.4 & 8.8\\
+w/o delay compensation & 89.8 & 17.5 & 10.1 & 9.1\\
+w/o safety shield & 87.2 & 24.6 & 13.5 & 14.8\\
+\baseline{} & 89.7 & 16.2 & 9.8 & 7.4\\
+\method{} & \best{93.4} & \best{8.9} & \best{4.2} & \best{2.8}\\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\subsection{通信鲁棒性}
+
+图~\ref{fig:delay} 展示了固定时延与抖动延迟下的完成率退化占位结果。整体趋势表明，所有方法都会随时延上升而退化，但 \method{} 的退化最慢。原因在于，异步状态补偿与保守时间窗投影能把“延迟造成的状态错误”转化为“风险代价增加”，而不是直接转化为不可预期的调度错误。
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=\linewidth,height=4.8cm,
+  xlabel={平均时延（ms）}, ylabel={任务完成率（\%）},
+  grid=both, legend style={font=\scriptsize,at={(0.98,0.98)},anchor=north east},
+  xmin=50,xmax=500,ymin=70,ymax=98]
+  \addplot[orange!85,thick,dashed] coordinates {(50,90)(100,88)(200,84)(300,80)(500,74)};
+  \addlegendentry{Greedy+Reservation}
+  \addplot[teal!80,thick,dashdotted] coordinates {(50,92)(100,90)(200,87)(300,84)(500,78)};
+  \addlegendentry{TP/TPTS}
+  \addplot[blue!70,thick,dotted] coordinates {(50,94)(100,92)(200,90)(300,87)(500,81)};
+  \addlegendentry{\baseline{}}
+  \addplot[red!75!black,very thick] coordinates {(50,96)(100,95)(200,94)(300,92)(500,88)};
+  \addlegendentry{\method{}}
+\end{axis}
+\end{tikzpicture}
+\caption{通信时延鲁棒性占位图。\method{} 在高时延条件下保持更慢的性能退化。}
+\label{fig:delay}
+\end{figure}
+
+\subsection{实车闭环设计}
+
+实车部分建议使用 8--16 台 AMR，在真实工位和共享路口中连续运行 4--8 小时。图~\ref{fig:realworld} 给出实车实验设计示意。实车验证分为三个层次：首先验证 VDA5050 消息闭环和订单一致性；其次验证动态障碍进入调度闭环后是否减少紧急停车与人工介入；最后验证在重复测试日下结果是否稳定。
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=0.75,every node/.style={font=\scriptsize}]
+  \fill[gray!8] (0,0) rectangle (7.2,4.8);
+  \draw[step=0.8,gray!25] (0,0) grid (7.2,4.8);
+  \draw[very thick,blue!60] (0.6,0.8)--(2.2,0.8)--(3.6,2.2)--(5.8,2.2)--(6.6,3.6);
+  \draw[very thick,teal!70] (1.2,4.0)--(2.5,3.0)--(3.6,2.2)--(4.6,1.0);
+  \draw[fill=orange!75] (3.7,2.8) rectangle ++(0.5,0.35);
+  \node[right] at (4.2,3.0) {叉车横穿};
+  \draw[fill=red!65] (2.0,2.0) circle (0.12);
+  \node[left] at (1.9,2.0) {行人};
+  \foreach \x/\y/\c in {0.8/0.8/green!70,2.1/3.3/blue!70,4.6/1.0/orange!85,6.1/2.3/red!70,5.8/3.6/teal!80} {
+    \draw[fill=\c,draw=black,rounded corners=1pt] (\x-0.14,\y-0.1) rectangle (\x+0.14,\y+0.1);
+    \draw[-{Latex[length=1.5mm]}] (\x,\y) -- ++(0.28,0.12);
+  }
+  \node at (3.6,-0.35) {实车闭环示意：AMR、行人和叉车在共享通道中混行};
+\end{tikzpicture}
+\caption{实车闭环实验设计示意。正式版本应替换为平台截图、俯视图或脱敏后的现场图像。}
+\label{fig:realworld}
+\end{figure}
+
+\section{讨论}
+
+从研究角度看，\method{} 相比当前稿件最大的提升不在于“加了更多模块”，而在于将原本割裂的三个问题重新连接起来：一是动态障碍感知不再停留在本车避障层；二是通信与感知时延不再被视为外部噪声，而是进入状态外推和风险约束；三是实验目标不再只证明“系统能工作”，而是证明“在顶会级规模与扰动下，该设计更优”。这三点共同决定了新论文是否有机会从工程草稿升级为研究论文。
+
+当然，\method{} 仍有几个需要诚实呈现的局限。首先，多模态感知显著提升系统复杂度，对日志同步和部署调试提出更高要求。其次，chance-constrained 预约虽然更稳健，但参数 $\varepsilon$、$\kappa$ 和校准方式需要在不同场景中做细致调优。再次，实车大规模验证的成本较高，因此论文最好清晰区分“数字孪生主结论”和“实车闭环验证结论”，避免过度宣称。
+
+\section{结论}
+
+本文提出 \method{}，一种融合 YOLOv10、事件相机、LiDAR、异步状态补偿与不确定性感知安全盾的 VDA5050 云边协同多车调度框架。与当前 \baseline{} 相比，\method{} 的核心提升是把动态感知和风险不确定性真正纳入云端任务分配与时空预约闭环，而不是仅依赖静态规则和局部避障。本文进一步给出了对标顶会标准的完整实验流程、配图和占位结果，可作为下一阶段真实实验替换的骨架。后续工作应按照本文给出的实验矩阵完成大规模数字孪生和实车闭环验证，并以真实日志替换占位数值与示意图。
+
+\begin{thebibliography}{99}
+
+\bibitem{vda5050}
+VDA and VDMA, ``VDA 5050: Interface for the communication between automated guided vehicles and a master control,'' 2022.
+
+\bibitem{mqtt}
+OASIS Standard, ``MQTT Version 5.0,'' 2019.
+
+\bibitem{wurmankiva}
+P. R. Wurman, R. D'Andrea, and M. Mountz, ``Coordinating hundreds of cooperative, autonomous vehicles in warehouses,'' \emph{AI Magazine}, vol. 29, no. 1, pp. 9--20, 2008.
+
+\bibitem{mapfbench}
+R. Stern et al., ``Multi-agent pathfinding: Definitions, variants, and benchmarks,'' in \emph{Proc. International Symposium on Combinatorial Search}, 2019, pp. 151--158.
+
+\bibitem{mapd}
+H. Ma, J. Li, T. K. S. Kumar, and S. Koenig, ``Lifelong multi-agent path finding for online pickup and delivery tasks,'' in \emph{Proc. International Conference on Autonomous Agents and MultiAgent Systems}, 2017.
+
+\bibitem{rtaw}
+A. Agrawal, A. S. Bedi, and D. Manocha, ``RTAW: An attention inspired reinforcement learning method for multi-robot task allocation in warehouse environments,'' arXiv:2209.05738, 2022.
+
+\bibitem{yolov10}
+A. Wang et al., ``YOLOv10: Real-time end-to-end object detection,'' arXiv:2405.14458, 2024.
+
+\bibitem{dsec}
+M. Gehrig, W. Aarents, D. Gehrig, and D. Scaramuzza, ``DSEC: A stereo event camera dataset for driving scenarios,'' \emph{IEEE Robotics and Automation Letters}, vol. 6, no. 3, pp. 4947--4954, 2021.
+
+\bibitem{flexevent}
+D. Lu, L. Kong, G. H. Lee, C. S. Chane, and W. T. Ooi, ``FlexEvent: Event camera object detection at arbitrary frequencies,'' arXiv:2412.06708, 2024.
+
+\bibitem{cbf}
+A. D. Ames, X. Xu, J. W. Grizzle, and P. Tabuada, ``Control barrier function based quadratic programs for safety critical systems,'' \emph{IEEE Transactions on Automatic Control}, vol. 62, no. 8, pp. 3861--3876, 2017.
+
+\end{thebibliography}
+
+\balance
+\end{document}

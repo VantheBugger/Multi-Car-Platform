@@ -1,0 +1,21 @@
+<launch>
+  <arg name="robot_id" default="robot_0"/>
+  <arg name="x" default="-2.5"/>
+  <arg name="y" default="1"/>
+  <arg name="z" default="0.3"/>
+  <arg name="yaw" default="1.57"/>
+
+  <group ns="$(arg robot_id)">
+    <param name="robot_description" command="$(find xacro)/xacro '$(find 4WIS_Robot)/urdf/car_4ws_4wd.urdf.xacro' robot_name:='$(arg robot_id)' enable_sensors:=false enable_collision:=false"/>
+    <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" output="screen" args="-urdf -x $(arg x) -y $(arg y) -z $(arg z) -Y $(arg yaw) -model $(arg robot_id) -param /$(arg robot_id)/robot_description"/>
+    <rosparam file="$(find 4WIS_Robot)/config/multi_mode_4ws_controller.yaml" command="load"/>
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher">
+      <param name="rate" value="20"/>
+    </node>
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="true" output="screen" args="multi_mode_4ws_controller"/>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
+      <param name="tf_prefix" value="$(arg robot_id)"/>
+      <param name="publish_frequency" value="20.0"/>
+    </node>
+  </group>
+</launch>

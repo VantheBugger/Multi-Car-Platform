@@ -1,0 +1,51 @@
+<launch>
+  <arg name="map_id" default="1"/>
+  <arg name="run_enable" default="true"/>
+  <arg name="robot_id" default="robot_0"/>
+  <arg name="mqtt_host" default="127.0.0.1"/>
+  <arg name="mqtt_port" default="1883"/>
+  <arg name="gui" default="false"/>
+  <arg name="headless" default="true"/>
+
+  <param name="/use_sim_time" value="true"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="debug" value="false"/>
+    <arg name="world_name" value="$(find BARN_Env)/source/world_files/road_graph_minimal.world"/>
+  </include>
+
+  <include file="/bridge/real2sim/sim_robot_lite.launch">
+    <arg name="robot_id" value="$(arg robot_id)"/>
+  </include>
+
+  <include file="$(find mqtt_comm)/launch/run.launch">
+    <arg name="robot_id" value="$(arg robot_id)"/>
+    <arg name="mqtt_host" value="$(arg mqtt_host)"/>
+    <arg name="mqtt_port" value="$(arg mqtt_port)"/>
+  </include>
+
+  <node pkg="task_manager" type="sim_vehicle_bridge.py" name="sim_vehicle_bridge" output="screen">
+    <param name="robot_name" value="$(arg robot_id)"/>
+    <param name="world_frame" value="map"/>
+    <param name="map_offset_y" value="0.15"/>
+    <param name="base_frame" value="base_link"/>
+    <param name="cmd_vel_topic" value="/robot_0/multi_mode_4ws_controller/cmd_vel"/>
+    <param name="mode_select_topic" value="/robot_0/multi_mode_4ws_controller/mode_select"/>
+    <param name="localization_topic" value="/localization"/>
+    <param name="car_state_topic" value="/car_state"/>
+    <param name="state_publish_rate" value="20.0"/>
+    <param name="forward_lidar" value="false"/>
+  </node>
+
+  <include file="$(find path_planner)/launch/run.launch"/>
+  <node pkg="task_manager" type="odom_to_pose.py" name="odom_to_pose" output="screen">
+    <param name="odom_topic" value="/localization"/>
+    <param name="pose_topic" value="/current_pose"/>
+  </node>
+  <include file="$(find path_tracker)/launch/run.launch"/>
+  <node pkg="task_manager" type="task_manager_node.py" name="task_manager" output="screen"/>
+</launch>

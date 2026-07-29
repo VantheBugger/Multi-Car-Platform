@@ -1,0 +1,55 @@
+{
+  "name": "global_s.pcd rough registration",
+  "description": "将 global_s.pcd 按当前人工校准结果固化到地图底图；后续仍可通过页面控制项继续微调。",
+  "center": [
+    39.96286,
+    116.304171
+  ],
+  "zoom": 19,
+  "rotationDeg": -360.5,
+  "metersPerPcdMeter": 1.0,
+  "vehicleTransform": {
+    "scale": 1.0,
+    "rotationDeg": 0.0,
+    "origin": [
+      0,
+      0
+    ],
+    "description": "真实小车坐标的显示比例；只影响车辆 marker 的坐标映射，不影响点云图层配准。"
+  },
+  "bounds": {
+    "southWest": [
+      39.96163,
+      116.3022
+    ],
+    "northEast": [
+      39.96427,
+      116.30626
+    ]
+  },
+  "sourcePcdBounds": {
+    "minX": -166.5,
+    "maxX": 157.5,
+    "minY": -190.5,
+    "maxY": 87.0,
+    "minZ": -3.142,
+    "maxZ": 36.906,
+    "width": 433,
+    "height": 371
+  },
+  "image": {
+    "width": 433,
+    "height": 371,
+    "pointCloud": "/maps/global_s.pointcloud.png",
+    "semantic": "/maps/global_s.semantic.png"
+  },
+  "localToLatLng": {
+    "type": "linear_bounds_fit",
+    "xMapsWestToEast": true,
+    "yMapsSouthToNorth": true
+  },
+  "references": [
+    "https://www.bit.edu.cn/gbxxgk/xydy_sjb/dlwz_sjb/index.htm",
+    "https://ac.bit.edu.cn/index.htm"
+  ]
+}

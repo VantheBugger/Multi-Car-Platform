@@ -1,0 +1,54 @@
+.dashboard {
+  min-width: 0;
+}
+
+.dashboard .statistic-card {
+  height: 100%;
+  border-color: #3c3c3c;
+  background: #252526;
+}
+
+.dashboard .ant-statistic {
+  padding: 4px;
+}
+
+.dashboard .ant-statistic-title {
+  margin-bottom: 10px;
+  color: #b3b3b3;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.dashboard .ant-statistic-content {
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.dashboard .ant-statistic-content-prefix {
+  margin-inline-end: 10px;
+}
+
+.dashboard .ant-table-wrapper {
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.dashboard .ant-table-thead > tr > th {
+  color: #d4d4d4;
+  background: #2d2d30;
+  font-weight: 600;
+}
+
+.dashboard .ant-table-tbody > tr:hover > td {
+  background: #2a2d2e !important;
+}
+
+.dashboard .chart-card {
+  background: #252526;
+}
+
+@media (max-width: 760px) {
+  .dashboard .ant-statistic-content {
+    font-size: 22px;
+  }
+}

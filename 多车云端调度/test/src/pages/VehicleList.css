@@ -1,0 +1,42 @@
+.vehicle-list {
+  min-width: 0;
+}
+
+.vehicle-list .ant-table-wrapper {
+  overflow: hidden;
+  border: 1px solid #3c3c3c;
+  border-radius: 4px;
+}
+
+.vehicle-list .ant-table-thead > tr > th {
+  color: #d4d4d4;
+  background: #2d2d30;
+  font-weight: 600;
+}
+
+.vehicle-list .ant-table-tbody > tr:hover > td {
+  background: #2a2d2e !important;
+}
+
+.vehicle-list .ant-progress-inner {
+  background: #3a3a3a;
+}
+
+.vehicle-list .ant-progress-text {
+  color: #d4d4d4;
+}
+
+.ant-modal-content {
+  border: 1px solid #464647;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.55);
+}
+
+.ant-modal-header {
+  border-bottom: 1px solid #3c3c3c;
+  background: #252526;
+}
+
+.ant-modal-title {
+  color: #f0f0f0;
+  font-weight: 600;
+}

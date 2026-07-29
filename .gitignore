@@ -1,0 +1,36 @@
+# Local agent metadata
+.agents/
+.codex/
+
+# Dependencies and generated builds
+**/node_modules/
+**/dist/
+**/build/
+**/.vite/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python caches
+**/__pycache__/
+*.py[cod]
+**/.pytest_cache/
+
+# Generated logs and temporary files
+*.log
+*.aux
+*.fls
+*.fdb_latexmk
+*.xdv
+*.out
+*.work
+*.orig
+~$*
+
+# Editor and OS metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

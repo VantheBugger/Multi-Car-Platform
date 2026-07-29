@@ -1,0 +1,1020 @@
+.semantic-map-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.semantic-map-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.semantic-map-toolbar > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.semantic-map-toolbar span,
+.semantic-map-footer {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.semantic-map-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.semantic-map-controls {
+  display: grid;
+  grid-template-columns: max-content minmax(120px, 220px) max-content minmax(120px, 220px);
+  align-items: center;
+  gap: 8px 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.semantic-map-slider {
+  min-width: 120px;
+  margin: 0;
+}
+
+.semantic-relocation-status {
+  grid-column: 1 / -1;
+  width: fit-content;
+  margin: 0;
+}
+
+.semantic-registration-controls {
+  display: grid;
+  grid-template-columns: minmax(240px, max-content) minmax(220px, 1fr) minmax(220px, 1fr);
+  align-items: center;
+  gap: 10px 16px;
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.semantic-registration-nudge {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.semantic-registration-controls label {
+  display: grid;
+  grid-template-columns: max-content minmax(140px, 1fr) 58px;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #334155;
+  font-size: 13px;
+}
+
+.semantic-registration-slider {
+  margin: 0;
+}
+
+.semantic-map-body {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.semantic-mission-panel {
+  height: 620px;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.semantic-mission-panel-title {
+  margin-bottom: 10px;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.semantic-mission-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.semantic-mission-item {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--mission-color) 45%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--mission-color) 9%, white);
+}
+
+.semantic-mission-swatch {
+  width: 12px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--mission-color);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--mission-color) 16%, transparent);
+  animation: semantic-task-pulse 0.9s ease-in-out infinite;
+}
+
+.semantic-mission-item div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.semantic-mission-item strong {
+  overflow: hidden;
+  color: #0f172a;
+  font-size: 13px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.semantic-mission-item span:not(.semantic-mission-swatch) {
+  color: #475569;
+  font-size: 12px;
+}
+
+.semantic-mission-empty {
+  padding: 14px 8px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.semantic-leaflet-map,
+.semantic-map-loading {
+  height: 620px;
+  width: 100%;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.semantic-map-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pcd-semantic-overlay,
+.pcd-pointcloud-overlay {
+  image-rendering: pixelated;
+  mix-blend-mode: multiply;
+  filter: saturate(1.12) contrast(1.08);
+  pointer-events: none;
+  transform-origin: 0 0;
+  user-select: none;
+}
+
+.pcd-pointcloud-overlay {
+  mix-blend-mode: normal;
+  filter: contrast(1.25);
+}
+
+.semantic-map-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.semantic-leaflet-vehicle {
+  background: transparent;
+  border: 0;
+}
+
+.semantic-leaflet-vehicle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 124px;
+  height: 34px;
+  pointer-events: none;
+}
+
+.semantic-leaflet-vehicle-inner {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 24px;
+  color: #fff;
+  background: var(--vehicle-color);
+  border: 2px solid #fff;
+  border-radius: 5px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.32);
+}
+
+.semantic-leaflet-vehicle-selected .semantic-leaflet-vehicle-inner {
+  box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.22), 0 8px 18px rgba(15, 23, 42, 0.32);
+}
+
+.semantic-leaflet-vehicle-running .semantic-leaflet-vehicle-inner {
+  animation: semantic-task-pulse 0.9s ease-in-out infinite;
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--mission-color) 22%, transparent), 0 8px 18px rgba(15, 23, 42, 0.32);
+}
+
+.semantic-leaflet-vehicle-label {
+  display: inline-flex;
+  align-items: center;
+  max-width: 76px;
+  height: 22px;
+  padding: 0 6px;
+  overflow: hidden;
+  border: 1px solid rgba(34, 197, 94, 0.32);
+  border-radius: 6px;
+  color: #14532d;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.16);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.semantic-leaflet-vehicle-selected .semantic-leaflet-vehicle-label {
+  color: #1e3a8a;
+  border-color: rgba(37, 99, 235, 0.44);
+  background: rgba(239, 246, 255, 0.96);
+}
+
+.semantic-leaflet-vehicle-running .semantic-leaflet-vehicle-label {
+  color: #0f172a;
+  border-color: color-mix(in srgb, var(--mission-color) 55%, transparent);
+  background: color-mix(in srgb, var(--mission-color) 12%, white);
+  animation: semantic-task-pulse 0.9s ease-in-out infinite;
+}
+
+.semantic-leaflet-vehicle-inner::before,
+.semantic-leaflet-vehicle-inner::after {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  content: '';
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.semantic-leaflet-vehicle-inner::before {
+  left: 9px;
+}
+
+.semantic-leaflet-vehicle-inner::after {
+  right: 9px;
+}
+
+.semantic-leaflet-vehicle-arrow {
+  position: relative;
+  z-index: 1;
+  width: 18px;
+  height: 3px;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.semantic-leaflet-vehicle-arrow::after {
+  position: absolute;
+  top: -5px;
+  right: -2px;
+  width: 0;
+  height: 0;
+  content: '';
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 8px solid #ffffff;
+}
+
+.semantic-coordinate-marker {
+  background: transparent;
+  border: 0;
+}
+
+.semantic-coordinate-marker-inner {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 88px;
+  height: 28px;
+  pointer-events: none;
+}
+
+.semantic-coordinate-dot {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: #7c3aed;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.32);
+}
+
+.semantic-coordinate-label {
+  display: inline-flex;
+  align-items: center;
+  min-width: 54px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid rgba(91, 33, 182, 0.28);
+  border-radius: 6px;
+  color: #312e81;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.semantic-road-node-marker {
+  background: transparent;
+  border: 0;
+}
+
+.semantic-road-edge-arrow {
+  background: transparent;
+  border: 0;
+}
+
+.semantic-road-edge-arrow-inner {
+  position: relative;
+  display: block;
+  width: 32px;
+  height: 32px;
+  pointer-events: none;
+  transform-origin: center;
+}
+
+.semantic-road-edge-arrow-inner::before {
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  width: 23px;
+  height: 7px;
+  border-radius: 999px;
+  background: #0f766e;
+  box-shadow: 0 2px 7px rgba(15, 23, 42, 0.42);
+  content: '';
+  transform: translateY(-50%);
+}
+
+.semantic-road-edge-arrow-inner::after {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-top: 11px solid transparent;
+  border-bottom: 11px solid transparent;
+  border-left: 14px solid #0f766e;
+  content: '';
+  filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.42));
+  transform: translateY(-50%);
+}
+
+.semantic-road-node-marker-inner {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 64px;
+  height: 28px;
+  pointer-events: none;
+}
+
+.semantic-road-node-dot {
+  flex: 0 0 auto;
+  display: block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: #0f766e;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.35);
+}
+
+.semantic-road-node-label {
+  display: inline-flex;
+  align-items: center;
+  min-width: 28px;
+  height: 20px;
+  padding: 0 6px;
+  border: 1px solid rgba(15, 118, 110, 0.32);
+  border-radius: 6px;
+  color: #064e3b;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.16);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.semantic-road-node-marker-selected .semantic-road-node-dot {
+  width: 18px;
+  height: 18px;
+  border-color: #f8fafc;
+  background: #2563eb;
+  box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.22), 0 6px 18px rgba(15, 23, 42, 0.38);
+}
+
+.semantic-road-node-marker-selected .semantic-road-node-label {
+  color: #1e3a8a;
+  border-color: rgba(37, 99, 235, 0.44);
+  background: rgba(239, 246, 255, 0.96);
+}
+
+.semantic-road-node-marker-running .semantic-road-node-dot {
+  width: 18px;
+  height: 18px;
+  border-color: #f8fafc;
+  background: var(--mission-color);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--mission-color) 22%, transparent), 0 6px 18px rgba(15, 23, 42, 0.38);
+  animation: semantic-task-pulse 0.9s ease-in-out infinite;
+}
+
+.semantic-road-node-marker-running .semantic-road-node-label {
+  color: #0f172a;
+  border-color: color-mix(in srgb, var(--mission-color) 55%, transparent);
+  background: color-mix(in srgb, var(--mission-color) 12%, white);
+  animation: semantic-task-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes semantic-task-pulse {
+  0%,
+  100% {
+    filter: brightness(1);
+    opacity: 1;
+  }
+
+  50% {
+    filter: brightness(1.18);
+    opacity: 0.48;
+  }
+}
+
+.semantic-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 220px;
+}
+
+.semantic-popup span {
+  font-size: 13px;
+  color: #475569;
+}
+
+.semantic-relocation-cursor {
+  background: transparent;
+  border: 0;
+}
+
+.semantic-relocation-cursor-inner {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border: 2px solid #2563eb;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.16);
+  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.12), 0 10px 24px rgba(15, 23, 42, 0.25);
+}
+
+.semantic-relocation-cursor-inner::before,
+.semantic-relocation-cursor-inner::after {
+  position: absolute;
+  content: '';
+  background: #2563eb;
+}
+
+.semantic-relocation-cursor-inner::before {
+  top: 15px;
+  left: 5px;
+  width: 20px;
+  height: 2px;
+}
+
+.semantic-relocation-cursor-inner::after {
+  top: 5px;
+  left: 15px;
+  width: 2px;
+  height: 20px;
+}
+
+.semantic-relocation-cursor-inner span {
+  position: absolute;
+  top: 13px;
+  left: 13px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #1d4ed8;
+}
+
+
+
+
+@media (max-width: 860px) {
+  .semantic-registration-controls,
+  .semantic-registration-controls {
+    grid-template-columns: max-content 1fr;
+  }
+
+  .semantic-map-body {
+    grid-template-columns: 1fr;
+  }
+
+  .semantic-mission-panel {
+    height: auto;
+    max-height: 180px;
+  }
+
+  .semantic-registration-controls label {
+    grid-column: 1 / -1;
+  }
+
+  .semantic-leaflet-map,
+  .semantic-map-loading {
+    height: 500px;
+  }
+}
+
+/* Dark workspace surface and compact node-selection mode */
+.semantic-map-shell {
+  color: #f0f0f0;
+}
+
+.semantic-map-toolbar strong {
+  color: #f0f0f0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.semantic-map-toolbar span,
+.semantic-map-footer {
+  color: #9d9d9d;
+}
+
+.semantic-map-tool-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  flex-wrap: wrap;
+}
+
+.semantic-registration-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding-inline: 10px;
+  color: #d4d4d4;
+  background: #2d2d30;
+  border-color: #464647;
+  box-shadow: none;
+}
+
+.semantic-registration-toggle .anticon:last-child {
+  margin-inline-start: 2px;
+  color: #858585;
+  font-size: 10px;
+  transition: transform 160ms ease;
+}
+
+.semantic-registration-toggle .anticon:last-child.is-open {
+  transform: rotate(180deg);
+}
+
+.semantic-selection-status,
+.semantic-relocation-status {
+  margin: 0;
+}
+
+.semantic-registration-controls[hidden] {
+  display: none !important;
+}
+
+.semantic-registration-controls {
+  border-color: #3c3c3c;
+  background: #202020;
+  box-shadow: inset 3px 0 0 #3794ff;
+}
+
+.semantic-registration-controls label,
+.semantic-registration-controls label span {
+  color: #d4d4d4;
+}
+
+.semantic-mission-panel {
+  border-color: #3c3c3c;
+  background: #202020;
+}
+
+.semantic-mission-panel-title,
+.semantic-mission-item strong {
+  color: #f0f0f0;
+}
+
+.semantic-mission-item {
+  background: color-mix(in srgb, var(--mission-color) 12%, #252526);
+}
+
+.semantic-mission-item span:not(.semantic-mission-swatch),
+.semantic-mission-empty {
+  color: #b3b3b3;
+}
+
+.semantic-leaflet-map,
+.semantic-map-loading {
+  border-color: #3c3c3c;
+  background: #252526;
+}
+
+.semantic-leaflet-map.is-selecting-road-node {
+  cursor: crosshair;
+}
+
+.semantic-map-footer {
+  padding: 0 2px;
+  font-size: 12px;
+}
+
+.semantic-road-node-marker-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.semantic-road-node-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid #d7f4ef;
+  background: #0f766e;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.72);
+  transition: width 120ms ease, height 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+.semantic-road-node-marker-labeled .semantic-road-node-marker-inner {
+  pointer-events: auto;
+}
+
+.semantic-road-node-marker-labeled .semantic-road-node-dot {
+  width: 22px;
+  height: 22px;
+  border-color: #f0f6ff;
+  background: #0e639c;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.58), 0 3px 10px rgba(0, 0, 0, 0.58);
+}
+
+.semantic-road-node-label {
+  display: block;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  color: #ffffff;
+  background: transparent;
+  box-shadow: none;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.is-selecting-road-node .semantic-road-node-marker-labeled {
+  cursor: pointer;
+}
+
+.is-selecting-road-node .semantic-road-node-marker-labeled:hover {
+  z-index: 1200 !important;
+}
+
+.is-selecting-road-node .semantic-road-node-marker-labeled:hover .semantic-road-node-dot {
+  transform: scale(1.28);
+  box-shadow: 0 0 0 3px rgba(55, 148, 255, 0.38), 0 5px 14px rgba(0, 0, 0, 0.72);
+}
+
+.semantic-road-node-marker-selected .semantic-road-node-dot {
+  width: 26px;
+  height: 26px;
+  border-color: #ffffff;
+  background: #3794ff;
+  box-shadow: 0 0 0 4px rgba(55, 148, 255, 0.26), 0 5px 14px rgba(0, 0, 0, 0.68);
+}
+
+.semantic-road-node-marker-running .semantic-road-node-dot {
+  width: 26px;
+  height: 26px;
+  border-color: #ffffff;
+  background: var(--mission-color);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--mission-color) 25%, transparent), 0 5px 14px rgba(0, 0, 0, 0.68);
+}
+
+.semantic-road-node-marker-selected .semantic-road-node-label,
+.semantic-road-node-marker-running .semantic-road-node-label {
+  color: #ffffff;
+  border: 0;
+  background: transparent;
+}
+
+.semantic-leaflet-map .leaflet-popup-content-wrapper,
+.semantic-leaflet-map .leaflet-popup-tip {
+  color: #f0f0f0;
+  background: #252526;
+}
+
+.semantic-leaflet-map .leaflet-popup-content-wrapper {
+  border: 1px solid #464647;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.semantic-popup span {
+  color: #b3b3b3;
+}
+
+
+
+
+@media (max-width: 860px) {
+  .semantic-map-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .semantic-map-tags {
+    justify-content: flex-start;
+  }
+}
+
+.is-selecting-road-node .semantic-road-node-marker {
+  cursor: pointer;
+}
+
+.is-selecting-road-node .semantic-road-node-marker:not(.semantic-road-node-marker-labeled) .semantic-road-node-dot {
+  width: 10px;
+  height: 10px;
+  border-color: #ffffff;
+  background: #1177bb;
+  box-shadow: 0 0 0 2px rgba(55, 148, 255, 0.26), 0 2px 5px rgba(0, 0, 0, 0.7);
+}
+
+.semantic-leaflet-vehicle-label {
+  color: #d4d4d4;
+  border-color: rgba(78, 201, 176, 0.5);
+  background: rgba(37, 37, 38, 0.94);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.42);
+}
+
+.semantic-leaflet-vehicle-selected .semantic-leaflet-vehicle-label {
+  color: #ffffff;
+  border-color: rgba(55, 148, 255, 0.7);
+  background: rgba(37, 37, 38, 0.96);
+}
+
+.semantic-leaflet-vehicle-running .semantic-leaflet-vehicle-label {
+  color: #ffffff;
+  background: color-mix(in srgb, var(--mission-color) 24%, #252526);
+}
+
+.semantic-coordinate-label {
+  color: #ffffff;
+  border-color: rgba(197, 134, 192, 0.62);
+  background: rgba(37, 37, 38, 0.94);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.46);
+}
+
+/* Collision-free labels used while selecting a road node at zoom 21. */
+.semantic-road-node-marker-inner {
+  position: relative;
+  overflow: visible;
+}
+
+.semantic-road-node-marker-labeled .semantic-road-node-marker-inner {
+  pointer-events: none;
+}
+
+.semantic-road-node-marker-labeled .semantic-road-node-dot {
+  width: 7px;
+  height: 7px;
+  border: 1px solid #d7f4ef;
+  background: #0f766e;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.72);
+}
+
+.semantic-road-node-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 2px;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 2px;
+  color: #ffffff;
+  background: rgba(14, 99, 156, 0.86);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.78);
+  font-family: "Arial Narrow", "Segoe UI", sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 13px;
+  pointer-events: none;
+  transform: translate(calc(-50% + var(--label-x)), calc(-50% + var(--label-y)));
+}
+
+.is-selecting-road-node .semantic-road-node-marker-labeled:hover .semantic-road-node-dot {
+  transform: none;
+  box-shadow: 0 0 0 2px rgba(55, 148, 255, 0.4), 0 2px 5px rgba(0, 0, 0, 0.72);
+}
+
+.semantic-road-node-marker-selected .semantic-road-node-dot,
+.semantic-road-node-marker-running .semantic-road-node-dot {
+  width: 10px;
+  height: 10px;
+}
+
+.semantic-road-node-marker-selected .semantic-road-node-label {
+  background: rgba(17, 119, 187, 0.88);
+}
+
+.semantic-road-node-marker-running .semantic-road-node-label {
+  background: color-mix(in srgb, var(--mission-color) 86%, transparent);
+}
+
+.semantic-map-stage {
+  position: relative;
+  min-width: 0;
+}
+
+.semantic-map-stage > .semantic-leaflet-map {
+  height: 620px;
+}
+
+.semantic-road-magnifier {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 1000;
+  width: 340px;
+  height: 260px;
+  overflow: hidden;
+  border: 2px solid #3794ff;
+  border-radius: 6px;
+  background: #1e1e1e;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.62), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.semantic-road-magnifier-map {
+  width: 100%;
+  height: 100%;
+  background: #252526;
+}
+
+.semantic-road-magnifier-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1100;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 25px;
+  padding: 0 8px;
+  border: 1px solid #464647;
+  border-radius: 4px;
+  color: #ffffff;
+  background: rgba(37, 37, 38, 0.94);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.48);
+  font-size: 12px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.semantic-road-magnifier .leaflet-control-container {
+  display: none;
+}
+
+.semantic-road-node-marker-magnified .semantic-road-node-marker-inner,
+.semantic-road-node-marker-magnified .semantic-road-node-label {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.semantic-road-node-marker-magnified .semantic-road-node-dot {
+  width: 10px;
+  height: 10px;
+  border-width: 2px;
+}
+
+.semantic-road-node-marker-magnified .semantic-road-node-label {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 3px;
+  border-width: 1.5px;
+  border-radius: 3px;
+  font-size: 13px;
+  line-height: 22px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.78);
+  background: rgba(14, 99, 156, 0.84);
+}
+
+
+
+
+@media (max-width: 860px) {
+  .semantic-map-stage > .semantic-leaflet-map {
+    height: 500px;
+  }
+
+  .semantic-road-magnifier {
+    top: 12px;
+    right: 12px;
+    width: min(300px, calc(100% - 24px));
+    height: 220px;
+  }
+}
+
+/* The scroll-adjustable lens follows the primary map pointer and never intercepts selection clicks. */
+.semantic-road-magnifier {
+  right: auto;
+  pointer-events: none;
+  will-change: left, top;
+}
+
+.semantic-road-magnifier * {
+  pointer-events: none !important;
+}
+
+.semantic-road-magnifier-reticle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1100;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.58);
+  transform: translate(-50%, -50%);
+}
+
+.semantic-road-magnifier-reticle::before,
+.semantic-road-magnifier-reticle::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  content: "";
+  background: #ffffff;
+  box-shadow: 0 0 2px #000000;
+  transform: translate(-50%, -50%);
+}
+
+.semantic-road-magnifier-reticle::before {
+  width: 34px;
+  height: 1px;
+}
+
+.semantic-road-magnifier-reticle::after {
+  width: 1px;
+  height: 34px;
+}
+
+.semantic-road-node-marker-magnified.semantic-road-node-marker-selected .semantic-road-node-label {
+  background: rgba(17, 119, 187, 0.86);
+}
+
+.semantic-road-node-marker-magnified.semantic-road-node-marker-running .semantic-road-node-label {
+  background: color-mix(in srgb, var(--mission-color) 84%, transparent);
+}
+
+.semantic-mission-item > .ant-btn { margin-left: auto; flex: 0 0 auto; }

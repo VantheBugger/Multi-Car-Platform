@@ -1,0 +1,176 @@
+.app-shell {
+  height: 100vh;
+  min-width: 0;
+  color: #f0f0f0;
+  background: #181818;
+}
+
+.app-sider {
+  position: relative;
+  border-right: 1px solid #2b2b2b;
+  box-shadow: none;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 64px;
+  margin: 0;
+  padding: 0 20px;
+  border-bottom: 1px solid #2b2b2b;
+  color: #f0f0f0;
+  background: #181818;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.logo .anticon {
+  color: #4ec9b0;
+  font-size: 18px;
+}
+
+.app-sider .ant-menu {
+  padding: 10px 8px;
+  border-inline-end: 0;
+}
+
+.app-sider .ant-menu-item {
+  margin: 2px 0;
+  width: 100%;
+  border-radius: 4px;
+}
+
+.app-status {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  left: 16px;
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid #2b2b2b;
+  color: #b3b3b3;
+  font-size: 12px;
+}
+
+.app-status > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-status i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.app-status .is-connected {
+  color: #4ec9b0;
+}
+
+.app-status .is-disconnected {
+  color: #f14c4c;
+}
+
+.app-status .is-idle {
+  color: #cca700;
+}
+
+.app-main {
+  min-width: 0;
+  background: #181818;
+}
+
+.app-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  height: 64px;
+  padding: 0 24px;
+  border-bottom: 1px solid #2b2b2b;
+  background: #1f1f1f;
+  box-shadow: none;
+}
+
+.app-header h1 {
+  margin: 0;
+  color: #f0f0f0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.app-header span {
+  color: #858585;
+  font-size: 12px;
+}
+
+.app-content {
+  min-width: 0;
+  padding: 20px;
+  overflow: auto;
+  background: #1e1e1e;
+}
+
+.app-content .ant-card {
+  border-color: #3c3c3c;
+  box-shadow: none;
+}
+
+.app-content .ant-card-head {
+  border-bottom-color: #3c3c3c;
+}
+
+.app-content .ant-btn-primary {
+  box-shadow: none;
+}
+
+@media (max-width: 760px) {
+  .app-sider {
+    flex: 0 0 64px !important;
+    width: 64px !important;
+    min-width: 64px !important;
+    max-width: 64px !important;
+  }
+
+  .logo {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .logo span,
+  .app-sider .ant-menu-title-content,
+  .app-status {
+    display: none;
+  }
+
+  .app-sider .ant-menu {
+    padding-inline: 6px;
+  }
+
+  .app-sider .ant-menu-item {
+    justify-content: center;
+    padding-inline: 0 !important;
+  }
+
+  .app-sider .ant-menu-item .anticon {
+    margin-inline-end: 0;
+    font-size: 17px;
+  }
+
+  .app-header {
+    padding: 0 16px;
+  }
+
+  .app-header h1 {
+    font-size: 15px;
+  }
+
+  .app-content {
+    padding: 12px;
+  }
+}

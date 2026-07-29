@@ -1,0 +1,40 @@
+{
+  "name": "BIT Zhongguancun campus building 6 rough registration",
+  "description": "将 global_ss.pcd 中被橘色点云包裹的长条空洞区域粗配准到北京理工大学中关村校区六号教学楼；后续可用实测 GCP 微调。",
+  "center": [
+    39.96295,
+    116.30423
+  ],
+  "zoom": 19,
+  "rotationDeg": -197.5,
+  "metersPerPcdMeter": 1.0,
+  "bounds": {
+    "southWest": [39.96163, 116.3022],
+    "northEast": [39.96427, 116.30626]
+  },
+  "sourcePcdBounds": {
+    "minX": -159.0,
+    "maxX": 188.25,
+    "minY": -108.0,
+    "maxY": 186.0,
+    "minZ": -7.678,
+    "maxZ": 34.522,
+    "width": 464,
+    "height": 393
+  },
+  "image": {
+    "width": 464,
+    "height": 393,
+    "pointCloud": "/maps/global_ss.pointcloud.png",
+    "semantic": "/maps/global_ss.semantic.png"
+  },
+  "localToLatLng": {
+    "type": "linear_bounds_fit",
+    "xMapsWestToEast": true,
+    "yMapsSouthToNorth": true
+  },
+  "references": [
+    "https://www.bit.edu.cn/gbxxgk/xydy_sjb/dlwz_sjb/index.htm",
+    "https://ac.bit.edu.cn/index.htm"
+  ]
+}

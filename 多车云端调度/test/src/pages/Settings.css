@@ -1,0 +1,68 @@
+.settings {
+  max-width: 980px;
+  min-width: 0;
+}
+
+.settings .ant-card {
+  margin-bottom: 16px;
+  border-color: #3c3c3c;
+  background: #252526;
+}
+
+.settings .ant-card-head {
+  min-height: 48px;
+  padding: 0 18px;
+  border-bottom-color: #3c3c3c;
+  background: #252526;
+}
+
+.settings .ant-card-head-title {
+  color: #f0f0f0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.settings .ant-form-item-label > label {
+  color: #d4d4d4;
+  font-weight: 500;
+}
+
+.settings .ant-divider {
+  border-color: #3c3c3c;
+}
+
+.settings h3,
+.settings h4 {
+  margin: 16px 0 8px;
+  color: #f0f0f0;
+  font-weight: 600;
+}
+
+.settings p {
+  margin: 8px 0;
+  color: #d4d4d4;
+}
+
+.settings-note,
+.settings-help-list {
+  color: #9d9d9d !important;
+}
+
+.settings ul {
+  padding-left: 20px;
+  color: #b3b3b3;
+  line-height: 1.9;
+}
+
+.settings code {
+  padding: 2px 5px;
+  border: 1px solid #464647;
+  border-radius: 3px;
+  color: #ce9178;
+  background: #1e1e1e;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+.settings .ant-btn {
+  box-shadow: none;
+}
