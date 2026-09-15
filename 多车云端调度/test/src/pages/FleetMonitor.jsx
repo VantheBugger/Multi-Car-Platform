@@ -83,6 +83,27 @@ function FleetMonitor({ mqttConnected }) {
       mqttService.subscribe('vehicle/+', (topic, data) => {
         applyVisualizationPayload(data);
       });
+      mqttService.subscribe('vehicles/+/cancel_ack', (topic, data) => {
+        const vehicleId = topic.split('/')[1];
+        const accepted = data?.accepted !== false;
+        const status = data?.status || (accepted ? 'canceled' : 'cancel_rejected');
+        setMissionStates((current) => {
+          const existing = current[vehicleId];
+          if (!existing && !accepted) return current;
+          const next = { ...current };
+          if (accepted) {
+            delete next[vehicleId];
+          } else if (existing) {
+            next[vehicleId] = { ...existing, status };
+          }
+          return next;
+        });
+        if (accepted) {
+          message.success(`${vehicleId} cancel confirmed`);
+        } else {
+          message.error(`${vehicleId} cancel rejected`);
+        }
+      });
     }
 
     return () => {
@@ -178,6 +199,15 @@ function FleetMonitor({ mqttConnected }) {
 
       if (planningMode === 'cloud') {
         const coordinatedPath = coordinateCloudPath(plannedPath, missionStates, vehicleId);
+        // Keep the MQTT/ROS sideband compact: segment ranges index the
+        // top-level XYZ+speed points instead of duplicating every point.
+        const serializePathPoint = (point) => ({
+          // Four decimals retain sub-millimetre map precision while keeping
+          // the ROS String sideband small enough for DDS fragmentation.
+          x: Number(Number(point.x).toFixed(4)),
+          y: Number(Number(point.y).toFixed(4)),
+          z: Number.isFinite(Number(point.speed)) ? Number(point.speed) : 1.5,
+        });
         const pathPayload = {
           type: 'planned_path',
           planning_mode: 'cloud',
@@ -196,11 +226,13 @@ function FleetMonitor({ mqttConnected }) {
           x: node.x,
           y: node.y,
           z: node.z || 0,
-          path_format: 'ros_path_speed_z_v1',
-          points: coordinatedPath.points.map((point) => ({
-            ...point,
-            z: Number.isFinite(Number(point.speed)) ? Number(point.speed) : 1.5,
-          })),
+          path_format: 'ros_path_speed_z_v2',
+          segmentation: coordinatedPath.segmentation,
+          turn_angle_deg: coordinatedPath.turnAngleDeg,
+          segment_count: coordinatedPath.segments.length,
+          segment_encoding: 'top_level_index_v1',
+          segments: coordinatedPath.segments.map(({ points: _segmentPoints, ...segment }) => segment),
+          points: coordinatedPath.points.map(serializePathPoint),
           timestamp: new Date().toISOString(),
         };
         const publishPath = () => mqttService.publish(`vehicles/${vehicleId}/path`, pathPayload)

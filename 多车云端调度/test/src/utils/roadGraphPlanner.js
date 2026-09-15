@@ -2,6 +2,11 @@ const ENDPOINT_EPSILON = 1e-6;
 
 const ROS2_PATH_SAMPLE_SPACING_METERS = 0.1;
 
+// Keep turn decisions tied to graph geometry instead of dense samples.  The
+// vehicle action tracker uses these boundaries to stop and rotate at corners.
+const CLOUD_TURN_ANGLE_DEG = 50;
+const CLOUD_TURN_ANGLE_RAD = (CLOUD_TURN_ANGLE_DEG * Math.PI) / 180;
+
 function edgeIsDirected(roadGraph, edge) {
   return roadGraph.directed === true || edge.directed === true;
 }
@@ -181,6 +186,96 @@ function resamplePathForRos2(points, spacing = ROS2_PATH_SAMPLE_SPACING_METERS) 
   return sampled;
 }
 
+function headingBetween(first, second) {
+  if (!first || !second) return null;
+  const dx = Number(second.x) - Number(first.x);
+  const dy = Number(second.y) - Number(first.y);
+  if (!Number.isFinite(dx) || !Number.isFinite(dy) || Math.hypot(dx, dy) <= ENDPOINT_EPSILON) {
+    return null;
+  }
+  return Math.atan2(dy, dx);
+}
+
+function normalizeAngle(angle) {
+  return Math.atan2(Math.sin(angle), Math.cos(angle));
+}
+
+function turnAngleAt(points, index) {
+  const incoming = headingBetween(points[index - 1], points[index]);
+  const outgoing = headingBetween(points[index], points[index + 1]);
+  if (incoming === null || outgoing === null) return null;
+  return Math.abs(normalizeAngle(outgoing - incoming));
+}
+
+// Each graph corner becomes an explicit action boundary.  The flat points
+// array remains backward compatible and carries enough metadata for a newer
+// vehicle subscriber to execute the segments without guessing local angles.
+function buildExplicitCloudSegments(rawPoints) {
+  if (!Array.isArray(rawPoints) || rawPoints.length < 2) {
+    return { points: rawPoints || [], segments: [] };
+  }
+
+  const boundaries = [0];
+  for (let index = 1; index < rawPoints.length - 1; index += 1) {
+    const angle = turnAngleAt(rawPoints, index);
+    if (angle !== null && angle >= CLOUD_TURN_ANGLE_RAD) boundaries.push(index);
+  }
+  boundaries.push(rawPoints.length - 1);
+
+  const points = [];
+  const segments = [];
+  for (let segmentId = 0; segmentId < boundaries.length - 1; segmentId += 1) {
+    const startIndex = boundaries[segmentId];
+    const endIndex = boundaries[segmentId + 1];
+    const rawSegment = rawPoints.slice(startIndex, endIndex + 1);
+    if (rawSegment.length < 2) continue;
+
+    // Resampling is deliberately done after splitting, so a turn point is
+    // both the end of the incoming action and the start of the outgoing one.
+    const sampled = resamplePathForRos2(rawSegment);
+    const hasNext = segmentId < boundaries.length - 2;
+    const segmentYaw = headingBetween(rawSegment[0], rawSegment[1]) ?? 0;
+    const targetYaw = hasNext
+      ? (headingBetween(rawPoints[endIndex], rawPoints[endIndex + 1]) ?? segmentYaw)
+      : (headingBetween(rawSegment[rawSegment.length - 2], rawSegment[rawSegment.length - 1]) ?? segmentYaw);
+    const cornerAngle = hasNext ? (turnAngleAt(rawPoints, endIndex) ?? 0) : 0;
+    const flatStartIndex = points.length;
+
+    sampled.forEach((point, pointIndex) => {
+      const isStart = pointIndex === 0;
+      const isEnd = pointIndex === sampled.length - 1;
+      const previous = sampled[Math.max(0, pointIndex - 1)];
+      const next = sampled[Math.min(sampled.length - 1, pointIndex + 1)];
+      points.push({
+        ...point,
+        segment_id: segmentId,
+        segment_start: isStart,
+        segment_end: isEnd,
+        stop_before_turn: isEnd && hasNext,
+        turn_in_place: isEnd && hasNext,
+        target_yaw: targetYaw,
+        yaw: headingBetween(previous, next) ?? segmentYaw,
+        turn_angle_deg: isEnd && hasNext ? (cornerAngle * 180) / Math.PI : 0,
+      });
+    });
+
+    segments.push({
+      segment_id: segmentId,
+      start_index: flatStartIndex,
+      end_index: points.length - 1,
+      start_node_id: rawSegment[0].node_id || null,
+      end_node_id: rawSegment[rawSegment.length - 1].node_id || null,
+      target_yaw: targetYaw,
+      turn_angle_deg: hasNext ? (cornerAngle * 180) / Math.PI : 0,
+      stop_before_turn: hasNext,
+      turn_in_place: hasNext,
+      points: points.slice(flatStartIndex),
+    });
+  }
+
+  return { points, segments };
+}
+
 function timelineFor(points, startAt, speed = 1.5) {
   let time = startAt;
   return points.slice(1).map((point, index) => {
@@ -224,7 +319,7 @@ export function buildCloudPathPoints(roadGraph, vehicle, targetNode) {
 
   const nodeMap = new Map(roadGraph.nodes.map((node) => [node.id, node]));
   const startNode = nodeMap.get(entry.entryNodeId);
-  const points = resamplePathForRos2(deduplicatePoints([
+  const rawPoints = deduplicatePoints([
     {
       x: entry.projection.x,
       y: entry.projection.y,
@@ -249,7 +344,9 @@ export function buildCloudPathPoints(roadGraph, vehicle, targetNode) {
         sequence: index,
       } : null;
     }).filter(Boolean),
-  ]));
+  ]);
+  const explicitPath = buildExplicitCloudSegments(rawPoints);
+  const { points, segments } = explicitPath;
 
   if (points.length < 2) return null;
   return {
@@ -262,6 +359,9 @@ export function buildCloudPathPoints(roadGraph, vehicle, targetNode) {
     // close enough to this directed road entry for tracking to begin safely.
     requiresRecovery: entry.projection.distance > 3.0,
     nodeIds: entry.graphPath,
+    segmentation: 'graph_turn_v1',
+    turnAngleDeg: CLOUD_TURN_ANGLE_DEG,
+    segments,
     points,
   };
 }

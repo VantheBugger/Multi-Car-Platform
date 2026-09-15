@@ -34,3 +34,9 @@
 .idea/
 .DS_Store
 Thumbs.db
+
+# 车端代码
+car_ros1/
+car_ros2/
+ros1_van_0909/
+success_src/
